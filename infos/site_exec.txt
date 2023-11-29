@@ -1,0 +1,1 @@
+https://politecnica.pucrs.br/phpPgAdmin/redirect.php?subject=server&server=%3A5432%3Aallow&
