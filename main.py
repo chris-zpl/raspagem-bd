@@ -14,11 +14,11 @@ import os
 class Scrapy:
     def __init__(self):
         opcao = Options()
-        #opcao.add_argument('--window-size=1920,1080')
+        #opcao.add_argument('--start-maximized')
         opcao.add_argument('--disable-notifications')
         opcao.add_argument('--disable-extensions')
         opcao.add_argument('--disable-gpu')
-        opcao.add_argument('--start-maximized')
+        opcao.add_argument('--headless=new')
         servico = Service(ChromeDriverManager().install())
         self.navegador = webdriver.Chrome(options=opcao, service=servico)
     
@@ -62,9 +62,9 @@ class Scrapy:
 
     def execucao(self):
         try:
-            print(cores(cor='branco', mensagem='Aguardando o início da execução\n'))
+            print(cores(cor='branco', mensagem='> Aguardando o início da execução\n'))
             self.raspagem_dados_professores()
-            print(cores(cor='branco', mensagem='\nAguardando o início da próxima execução'))
+            print(cores(cor='branco', mensagem='\n> Aguardando o início da próxima execução'))
             self.raspagem_dados_esp_fisico()
             self.criar_planilha()
             print(cores(cor='branco', mensagem='\nFinalizando a execução'))
@@ -107,7 +107,7 @@ class Scrapy:
         # Ao realizar o login, clica nos caminhos para ir até a tabela dos professores
         self.acesso_tabela_bd(tabela='professor')
 
-        print(cores(cor='cyan', mensagem='Iniciando Web Scraping dos Professores\n'))
+        print(cores(cor='cyan', mensagem='>> Iniciando Web Scraping dos Professores\n'))
 
         # Um click na coluna nome para dar um sorted em ASC
         self.navegador.find_element(By.XPATH, f'//*[@id="data"]/tbody/tr[1]/th[3]').click()
@@ -166,7 +166,7 @@ class Scrapy:
         # Ao realizar o login, clica nos caminhos para ir até a tabela dos professores
         self.acesso_tabela_bd(tabela='espaco_fisico')
 
-        print(cores(cor='cyan', mensagem='\nIniciando Web Scraping dos Espaços Físicos\n'))
+        print(cores(cor='cyan', mensagem='\n>> Iniciando Web Scraping dos Espaços Físicos\n'))
 
         # Um click na coluna código para dar um sorted em ASC
         self.navegador.find_element(By.XPATH, f'//*[@id="data"]/tbody/tr[1]/th[2]').click()
@@ -212,7 +212,7 @@ class Scrapy:
         self.navegador.find_element(By.LINK_TEXT, 'feng_ementas_20102').click()
 
     def criar_planilha(self):
-        print(cores('cyan', '\n>> Gerando planilha em Excel'))
+        print(cores(cor='cyan', mensagem='\n>> Gerando planilha em Excel'))
         sleep(1)
 
         # A planilha dos professores
@@ -235,6 +235,8 @@ class Scrapy:
                 estilo_sheet(ws,'E1')
                 ws['F1'] = 'Espaço Físico'
                 estilo_sheet(ws,'F1')
+                filtros = ws.auto_filter
+                filtros.ref = "A1:F1"
                 tamanho_max_nome = 0
                 tamanho_max_unidade = 0
                 tamanho_max_email = 0
@@ -245,7 +247,8 @@ class Scrapy:
                     ws.cell(column=4, row=index, value=matric).alignment = Alignment(horizontal='center',wrap_text=True, vertical='center')
                     ws.cell(column=5, row=index, value=email).alignment = Alignment(horizontal='center',wrap_text=True, vertical='center')
                     ws.cell(column=6, row=index, value=espacFis).alignment = Alignment(horizontal='center',wrap_text=True, vertical='center')
-                    # Calcula o tamanho da cell e adapta o tamanho
+                    
+                    # Calcula o tamanho das cells e adapta o tamanho
                     if len(nome) > tamanho_max_nome:
                         tamanho_max_nome = len(nome)
                     ws.column_dimensions['B'].width = tamanho_max_nome + 1
@@ -254,13 +257,13 @@ class Scrapy:
                         tamanho_max_unidade = len(uni)
                     ws.column_dimensions['C'].width = tamanho_max_unidade + 1
 
-
                     if len(email) > tamanho_max_email:
                         tamanho_max_email = len(email)
                     ws.column_dimensions['E'].width = tamanho_max_email + 1
 
                     ws.column_dimensions['F'].width = 12.20
 
+                    # Para pular de linha
                     index += 1
                 print(cores(cor='verde', mensagem=f'Planilha "{ws.title}" criada com sucesso'))
         except:
@@ -282,6 +285,8 @@ class Scrapy:
                 estilo_sheet(ws2,'C1')
                 ws2['D1'] = 'Capacidade'
                 estilo_sheet(ws2,'D1')
+                filtros = ws2.auto_filter
+                filtros.ref = "A1:D1"
                 tamanho_max_salas = 0
                 tamanho_max_nomes = 0
                 for cod, salas, nome, capacidade in zip(self.lista_cod_salas, self.lista_espaco_fisico, self.lista_nome_salas, self.lista_capacidade_salas):
@@ -289,17 +294,20 @@ class Scrapy:
                     ws2.cell(column=2, row=index, value=salas).alignment = Alignment(horizontal='center', wrap_text=True, vertical='center')
                     ws2.cell(column=3, row=index, value=nome).alignment = Alignment(horizontal='center', wrap_text=True, vertical='center')
                     ws2.cell(column=4, row=index, value=capacidade).alignment = Alignment(horizontal='center', wrap_text=True, vertical='center')
+                    
                     # Calcula o tamanho da cell e adapta o tamanho
                     if len(salas) > tamanho_max_salas:
                         tamanho_max_salas = len(salas)
                     ws2.column_dimensions['B'].width = tamanho_max_salas + 1
+
                     if len(nome) > tamanho_max_nomes:
                         tamanho_max_nomes = len(nome)
                     ws2.column_dimensions['C'].width = tamanho_max_nomes + 1
 
                     ws2.column_dimensions['D'].width = 11
-                    index += 1
 
+                    # Para pular de linha
+                    index += 1
                 print(cores(cor='verde', mensagem=f'Planilha "{ws2.title}" criada com sucesso'))
         except:
             print(cores(cor='vermelho', mensagem=f'\nNão foi possível criar uma planilha relacionada ao espaço físico'))
